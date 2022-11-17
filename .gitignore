@@ -123,3 +123,7 @@ work_dirs/
 *.pth
 *.py~
 *.sh~
+
+# Custom Ignore
+train.py
+*.ipynb
