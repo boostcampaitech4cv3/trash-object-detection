@@ -125,5 +125,5 @@ work_dirs/
 *.sh~
 
 # Custom Ignore
-train.py
+/train.py
 *.ipynb
