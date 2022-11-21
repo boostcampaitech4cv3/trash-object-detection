@@ -5,7 +5,7 @@ _base_ = [
 ]
 pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
 model = dict(
-    type='Faster_RCNN',
+    type='FasterRCNN',
     backbone=dict(
         _delete_=True,
         type='SwinTransformer',
@@ -39,4 +39,4 @@ optimizer = dict(
             'norm': dict(decay_mult=0.)
         }))
 lr_config = dict(warmup_iters=1000, step=[8, 11])
-runner = dict(max_epochs=12)
+runner = dict(max_epochs=15)

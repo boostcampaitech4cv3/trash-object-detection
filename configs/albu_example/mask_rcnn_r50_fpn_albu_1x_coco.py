@@ -19,11 +19,11 @@ albu_train_transforms = [
         transforms=[
             dict(
                 type='RGBShift',
-                r_shift_limit=10,
+                r_shift_limit=10, 
                 g_shift_limit=10,
                 b_shift_limit=10,
                 p=1.0),
-            dict(
+            dict( 
                 type='HueSaturationValue',
                 hue_shift_limit=20,
                 sat_shift_limit=30,
