@@ -126,4 +126,9 @@ work_dirs/
 
 # Custom Ignore
 /train.py
+/inference.py
 *.ipynb
+*.jpg
+*.packaging
+*.cff
+.*
