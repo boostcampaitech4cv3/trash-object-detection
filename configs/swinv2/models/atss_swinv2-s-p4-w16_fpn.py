@@ -1,12 +1,12 @@
 # model settings
-pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v2.0.0/swinv2_tiny_patch4_window16_256.pth'  # noqa
+pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v2.0.0/swinv2_small_patch4_window16_256.pth'  # noqa
 model = dict(
     type='ATSS',
     backbone=dict(
         type='SwinTransformerV2',
         pretrain_img_size=256,
         embed_dim=96,
-        depths=[2, 2, 6, 2],
+        depths=[2, 2, 18, 2],
         num_heads=[3, 6, 12, 24],
         window_size=16,
         mlp_ratio=4.,
