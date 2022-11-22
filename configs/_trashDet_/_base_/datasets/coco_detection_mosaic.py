@@ -1,48 +1,49 @@
 # dataset settings
-dataset_type = 'CocoDataset'
+dataset_type = 'MosaicCocoDataset'
 data_root = 'data/coco/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 albu_train_transforms = [
     dict(
-        type='VerticalFlip',
-        p=0.5),
-    dict(
         type='OneOf',
         transforms=[
-            dict(
-                type='ColorJitter',
-                brightness=[-0.2, 0.2], 
-                contrast=[-0.2, 0.2], 
-                saturation=[-0.2, 0.2], 
-                hue=[-0.2, 0.2], 
-                p=1),
+            # dict(
+            #     type='ColorJitter',
+            #     brightness=[-0.2, 0.2], 
+            #     contrast=[-0.2, 0.2], 
+            #     saturation=[-0.2, 0.2], 
+            #     hue=[-0.2, 0.2], 
+            #     p=1),
             dict(
                 type='RandomBrightnessContrast',
-                brightness_limit=(-0.2, 0.2),
-                contrast_limit=(-0.2, 0.2),
-                p=1),
+                brightness_limit=(-0.2, 0.3),
+                contrast_limit=(-0.2, 0.3),
+                p=1.0),
             dict(
                 type='CLAHE',
                 clip_limit=(2, 10),
                 tile_grid_size=(8, 8),
-                p=1),
+                p=1.0),
         ],
-        p=0.3),
+        p=0.5),
+    dict(
+        type='OneOf',
+        transforms=[
+            dict(type='Blur', blur_limit=3, p=1.0),
+            dict(type='MedianBlur', blur_limit=3, p=1.0)
+        ],
+        p=0.1),
     dict(
         type='GaussNoise',
         var_limit=[0, 50],
         p=0.3),
 ]
 train_pipeline = [
-    dict(type='LoadImageFromFile',to_float32=True),
-    dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='LoadMosaicImageAndAnnotations', with_bbox=True, with_mask=False, image_shape=[1024, 1024],
+         hsv_aug=True, h_gain=0.014, s_gain=0.68, v_gain=0.36, skip_box_w=5, skip_box_h=5),
     dict(
-        type='Resize',
-        img_scale=[(480, 1333), (640, 1333), (800, 1333)],
-        multiscale_mode='value',
-        keep_ratio=True),
+        type='Resize', img_scale=(1024, 1024), keep_ratio=True),
+    dict(type='RandomFlip', flip_ratio=0.5),
     dict(
         type='Albu',
         transforms=albu_train_transforms,
@@ -58,61 +59,28 @@ train_pipeline = [
         },
         update_pad_shape=False,
         skip_img_without_anno=True),
-    dict(
-        type='AutoAugment',
-        policies=[[
-                    dict(
-                        type='RandomCrop',
-                        crop_type='absolute_range',
-                        crop_size=(384, 600),
-                        allow_negative_crop=True),
-                    dict(
-                        type='Resize',
-                        img_scale=[(480, 1333), (512, 1333), (544, 1333),
-                                    (576, 1333), (608, 1333), (640, 1333),
-                                    (672, 1333), (704, 1333), (736, 1333),
-                                    (768, 1333), (800, 1333)],
-                        multiscale_mode='value',
-                        override=True,
-                        keep_ratio=True),
-                ],
-                [
-                    dict(
-                        type='Mosaic',
-                        img_scale=(640, 640),
-                        center_ratio_range=(0.5, 1.5),
-                        min_bbox_size=0,
-                        bbox_clip_border=True,
-                        skip_filter=True,
-                        pad_val=114,
-                        prob=1.0),
-                    dict(
-                        type='Resize',
-                        img_scale=[(480, 1333), (512, 1333), (544, 1333),
-                                    (576, 1333), (608, 1333), (640, 1333),
-                                    (672, 1333), (704, 1333), (736, 1333),
-                                    (768, 1333), (800, 1333)],
-                        multiscale_mode='value',
-                        override=True,
-                        keep_ratio=True),
-                ]]),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
-    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+    dict(
+        type='Collect', 
+        keys=['img', 'gt_bboxes', 'gt_labels'], 
+        meta_keys=('filename', 'ori_shape', 'img_shape', 'img_norm_cfg',
+                   'pad_shape', 'scale_factor')),
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(1333, 800),
+        img_scale=(1024, 1024),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='Pad', size_divisor=32),
-            dict(type='DefaultFormatBundle'),
+            # dict(type='DefaultFormatBundle'),
+            dict(type='ImageToTensor', keys=['img']),
             dict(type='Collect', keys=['img'])
         ])
 ]

@@ -18,6 +18,8 @@ from .voc import VOCDataset
 from .waymo_open import WaymoOpenDataset
 from .wider_face import WIDERFaceDataset
 from .xml_style import XMLDataset
+from .mosaic import MosaicDataset
+from .mosaiccoco import MosaicCocoDataset
 
 __all__ = [
     'CustomDataset', 'XMLDataset', 'CocoDataset', 'DeepFashionDataset',
@@ -27,7 +29,8 @@ __all__ = [
     'ClassBalancedDataset', 'WIDERFaceDataset', 'DATASETS', 'PIPELINES',
     'build_dataset', 'replace_ImageToTensor', 'get_loading_pipeline',
     'NumClassCheckHook', 'CocoPanopticDataset', 'MultiImageMixDataset',
-    'OpenImagesDataset', 'OpenImagesChallengeDataset'
+    'OpenImagesDataset', 'OpenImagesChallengeDataset', 'MosaicDataset',
+    'MosaicCocoDataset'
 ]
 
 __all__ += ['WaymoOpenDataset', 'NightOwlsDataset', 'GBRCOTSDataset']
