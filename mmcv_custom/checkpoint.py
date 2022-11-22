@@ -498,3 +498,30 @@ def save_checkpoint(model, filename, optimizer=None, meta=None):
         with open(filename, 'wb') as f:
             torch.save(checkpoint, f)
             f.flush()
+
+    if filename.startswith('pavi://'):
+        try:
+            from pavi import modelcloud
+            from pavi.exception import NodeNotFoundError
+        except ImportError:
+            raise ImportError(
+                'Please install pavi to load checkpoint from modelcloud.')
+        model_path = filename[7:]
+        root = modelcloud.Folder()
+        model_dir, model_name = osp.split(model_path)
+        try:
+            model = modelcloud.get(model_dir)
+        except NodeNotFoundError:
+            model = root.create_training_model(model_dir)
+        with TemporaryDirectory() as tmp_dir:
+            checkpoint_file = osp.join(tmp_dir, model_name)
+            with open(checkpoint_file, 'wb') as f:
+                torch.save(checkpoint, f)
+                f.flush()
+            model.create_file(checkpoint_file, name=model_name)
+    else:
+        mmcv.mkdir_or_exist(osp.dirname(filename))
+        # immediately flush buffer
+        with open(filename, 'wb') as f:
+            torch.save(checkpoint, f)
+            f.flush()

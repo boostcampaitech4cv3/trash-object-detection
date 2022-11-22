@@ -102,3 +102,5 @@ class EpochBasedRunnerAmp(EpochBasedRunner):
             self.logger.info('load amp state dict')
 
         self.logger.info('resumed epoch %d, iter %d', self.epoch, self.iter)
+
+        self.logger.info('resumed epoch %d, iter %d', self.epoch, self.iter)

@@ -26,6 +26,8 @@ from .swin import SwinTransformer
 from .swin_transformer import SwinTransformerOriginal
 from .swin_transformer_v2 import SwinTransformerV2
 from .trident_resnet import TridentResNet
+from .focalnet import FocalNet
+
 
 __all__ = [
     'RegNet', 'ResNet', 'ResNetV1d', 'ResNeXt', 'SSDVGG', 'HRNet', 

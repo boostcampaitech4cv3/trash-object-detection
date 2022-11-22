@@ -1,19 +1,20 @@
 # model settings
 model = dict(
     type='MaskRCNN',
+    pretrained=None,
     backbone=dict(
-        type='ResNet',
-        depth=50,
-        num_stages=4,
+        type='FocalNet',
+        embed_dim=96,
+        depths=[2, 2, 6, 2],
+        mlp_ratio=4.,
+        drop_rate=0.,
+        drop_path_rate=0.2,
+        patch_norm=True,
         out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=True),
-        norm_eval=True,
-        style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        use_checkpoint=False),
     neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[96, 192, 384, 768],
         out_channels=256,
         num_outs=5),
     rpn_head=dict(
@@ -53,7 +54,6 @@ model = dict(
             loss_cls=dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
             loss_bbox=dict(type='L1Loss', loss_weight=1.0)),
-        # mask
         mask_roi_extractor=dict(
             type='SingleRoIExtractor',
             roi_layer=dict(type='RoIAlign', output_size=14, sampling_ratio=0),
