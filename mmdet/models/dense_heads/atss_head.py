@@ -19,6 +19,25 @@ class ATSSHead(AnchorHead):
     and assign label by Adaptive Training Sample Selection instead max-iou.
 
     https://arxiv.org/abs/1912.02424
+
+    Args:
+        num_classes (int): Number of categories excluding the background
+            category.
+        in_channels (int): Number of channels in the input feature map.
+        stacked_convs (int): Number of conv layers in cls and reg tower.
+            Default: 4.
+        dcn_on_last_conv (bool): If true, use dcn in the last layer of
+            towers. Default: False.
+        conv_cfg (dict): dictionary to construct and config conv layer.
+            Default: None.
+        norm_cfg (dict): dictionary to construct and config norm layer.
+            Default: dict(type='GN', num_groups=32, requires_grad=True).
+        loss_centerness (dict): Config of centerness loss.
+            Default: dict(type='CrossEntropyLoss', use_sigmoid=True,
+            loss_weight=1.0).
+        avg_samples_to_int (bool): Whether to integerize average numbers of
+            samples. True for compatibility with old MMDetection versions.
+            False for following original ATSS. Default: False.
     """
 
     def __init__(self,
@@ -26,6 +45,7 @@ class ATSSHead(AnchorHead):
                  in_channels,
                  pred_kernel_size=3,
                  stacked_convs=4,
+                 dcn_on_last_conv=False,
                  conv_cfg=None,
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  reg_decoded_bbox=True,
@@ -33,6 +53,7 @@ class ATSSHead(AnchorHead):
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
                      loss_weight=1.0),
+                 avg_samples_to_int=False,
                  init_cfg=dict(
                      type='Normal',
                      layer='Conv2d',
@@ -45,8 +66,10 @@ class ATSSHead(AnchorHead):
                  **kwargs):
         self.pred_kernel_size = pred_kernel_size
         self.stacked_convs = stacked_convs
+        self.dcn_on_last_conv = dcn_on_last_conv
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
+        self.avg_samples_to_int = avg_samples_to_int
         super(ATSSHead, self).__init__(
             num_classes,
             in_channels,
@@ -69,6 +92,10 @@ class ATSSHead(AnchorHead):
         self.reg_convs = nn.ModuleList()
         for i in range(self.stacked_convs):
             chn = self.in_channels if i == 0 else self.feat_channels
+            if self.dcn_on_last_conv and i == self.stacked_convs - 1:
+                conv_cfg = dict(type='DCNv2')
+            else:
+                conv_cfg = self.conv_cfg
             self.cls_convs.append(
                 ConvModule(
                     chn,
@@ -76,7 +103,7 @@ class ATSSHead(AnchorHead):
                     3,
                     stride=1,
                     padding=1,
-                    conv_cfg=self.conv_cfg,
+                    conv_cfg=conv_cfg,
                     norm_cfg=self.norm_cfg))
             self.reg_convs.append(
                 ConvModule(
@@ -85,7 +112,7 @@ class ATSSHead(AnchorHead):
                     3,
                     stride=1,
                     padding=1,
-                    conv_cfg=self.conv_cfg,
+                    conv_cfg=conv_cfg,
                     norm_cfg=self.norm_cfg))
         pred_pad_size = self.pred_kernel_size // 2
         self.atss_cls = nn.Conv2d(
@@ -193,7 +220,8 @@ class ATSSHead(AnchorHead):
         # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
         bg_class_ind = self.num_classes
         pos_inds = ((labels >= 0)
-                    & (labels < bg_class_ind)).nonzero().squeeze(1)
+                    &
+                    (labels < bg_class_ind)).nonzero(as_tuple=False).squeeze(1)
 
         if len(pos_inds) > 0:
             pos_bbox_targets = bbox_targets[pos_inds]
@@ -280,6 +308,8 @@ class ATSSHead(AnchorHead):
         num_total_samples = reduce_mean(
             torch.tensor(num_total_pos, dtype=torch.float,
                          device=device)).item()
+        if self.avg_samples_to_int:
+            num_total_samples = int(num_total_samples)
         num_total_samples = max(num_total_samples, 1.0)
 
         losses_cls, losses_bbox, loss_centerness,\
@@ -499,3 +529,22 @@ class ATSSHead(AnchorHead):
             int(flags.sum()) for flags in split_inside_flags
         ]
         return num_level_anchors_inside
+
+
+@HEADS.register_module()
+class ATSSSEPCHead(ATSSHead):
+
+    def forward_single(self, x, scale):
+        if not isinstance(x, list):
+            x = [x, x]
+        cls_feat = x[0]
+        reg_feat = x[1]
+        for cls_conv in self.cls_convs:
+            cls_feat = cls_conv(cls_feat)
+        for reg_conv in self.reg_convs:
+            reg_feat = reg_conv(reg_feat)
+        cls_score = self.atss_cls(cls_feat)
+        # we just follow atss, not apply exp in bbox_pred
+        bbox_pred = scale(self.atss_reg(reg_feat)).float()
+        centerness = self.atss_centerness(reg_feat)
+        return cls_score, bbox_pred, centerness

@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .anchor_free_head import AnchorFreeHead
 from .anchor_head import AnchorHead
-from .atss_head import ATSSHead
+from .atss_head import ATSSHead, ATSSSEPCHead
 from .autoassign_head import AutoAssignHead
+from .bvr_head import BVRHead
 from .cascade_rpn_head import CascadeRPNHead, StageCascadeRPNHead
 from .centernet_head import CenterNetHead
 from .centripetal_head import CentripetalHead
@@ -17,8 +18,9 @@ from .free_anchor_retina_head import FreeAnchorRetinaHead
 from .fsaf_head import FSAFHead
 from .ga_retina_head import GARetinaHead
 from .ga_rpn_head import GARPNHead
-from .gfl_head import GFLHead
+from .gfl_head import GFLHead, GFLSEPCHead
 from .guided_anchor_head import FeatureAdaption, GuidedAnchorHead
+from .keypoint_head import KeypointHead
 from .lad_head import LADHead
 from .ld_head import LDHead
 from .mask2former_head import Mask2FormerHead
@@ -50,9 +52,11 @@ __all__ = [
     'PISARetinaHead', 'PISASSDHead', 'GFLHead', 'CornerHead', 'YOLACTHead',
     'YOLACTSegmHead', 'YOLACTProtonet', 'YOLOV3Head', 'PAAHead',
     'SABLRetinaHead', 'CentripetalHead', 'VFNetHead', 'StageCascadeRPNHead',
-    'CascadeRPNHead', 'EmbeddingRPNHead', 'LDHead', 'AutoAssignHead',
-    'DETRHead', 'YOLOFHead', 'DeformableDETRHead', 'SOLOHead',
-    'DecoupledSOLOHead', 'CenterNetHead', 'YOLOXHead',
+    'CascadeRPNHead', 'EmbeddingRPNHead', 'LDHead', 'CascadeRPNHead',
+    'AutoAssignHead', 'DETRHead', 'YOLOFHead', 'DeformableDETRHead',
+    'SOLOHead', 'DecoupledSOLOHead', 'CenterNetHead', 'YOLOXHead',
     'DecoupledSOLOLightHead', 'LADHead', 'TOODHead', 'MaskFormerHead',
     'Mask2FormerHead', 'SOLOV2Head', 'DDODHead'
 ]
+
+__all__ += ['ATSSSEPCHead', 'GFLSEPCHead', 'BVRHead', 'KeypointHead']

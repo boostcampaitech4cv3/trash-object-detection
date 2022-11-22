@@ -9,6 +9,7 @@ from .hungarian_assigner import HungarianAssigner
 from .mask_hungarian_assigner import MaskHungarianAssigner
 from .max_iou_assigner import MaxIoUAssigner
 from .point_assigner import PointAssigner
+from .point_kpt_assigner import PointKptAssigner
 from .region_assigner import RegionAssigner
 from .sim_ota_assigner import SimOTAAssigner
 from .task_aligned_assigner import TaskAlignedAssigner
@@ -20,3 +21,5 @@ __all__ = [
     'HungarianAssigner', 'RegionAssigner', 'UniformAssigner', 'SimOTAAssigner',
     'TaskAlignedAssigner', 'MaskHungarianAssigner'
 ]
+
+__all__ += ['PointKptAssigner']

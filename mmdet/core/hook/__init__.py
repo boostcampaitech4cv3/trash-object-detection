@@ -3,6 +3,7 @@ from .checkloss_hook import CheckInvalidLossHook
 from .ema import ExpMomentumEMAHook, LinearMomentumEMAHook
 from .memory_profiler_hook import MemoryProfilerHook
 from .set_epoch_info_hook import SetEpochInfoHook
+from .setter_hook import EpochSetterHook, IterSetterHook
 from .sync_norm_hook import SyncNormHook
 from .sync_random_size_hook import SyncRandomSizeHook
 from .wandblogger_hook import MMDetWandbHook
@@ -15,3 +16,5 @@ __all__ = [
     'CheckInvalidLossHook', 'SetEpochInfoHook', 'MemoryProfilerHook',
     'MMDetWandbHook'
 ]
+
+__all__ += ['EpochSetterHook', 'IterSetterHook']

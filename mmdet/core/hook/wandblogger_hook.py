@@ -135,8 +135,7 @@ class MMDetWandbHook(WandbLoggerHook):
         super(MMDetWandbHook, self).before_run(runner)
 
         # Save and Log config.
-        if runner.meta is not None and runner.meta.get('exp_name',
-                                                       None) is not None:
+        if runner.meta is not None:
             src_cfg_path = osp.join(runner.work_dir,
                                     runner.meta.get('exp_name', None))
             if osp.exists(src_cfg_path):
@@ -566,12 +565,10 @@ class MMDetWandbHook(WandbLoggerHook):
         data_artifact = self.wandb.Artifact('val', type='dataset')
         data_artifact.add(self.data_table, 'val_data')
 
-        if not self.wandb.run.offline:
-            self.wandb.run.use_artifact(data_artifact)
-            data_artifact.wait()
-            self.data_table_ref = data_artifact.get('val_data')
-        else:
-            self.data_table_ref = self.data_table
+        self.wandb.run.use_artifact(data_artifact)
+        data_artifact.wait()
+
+        self.data_table_ref = data_artifact.get('val_data')
 
     def _log_eval_table(self, idx):
         """Log the W&B Tables for model evaluation.

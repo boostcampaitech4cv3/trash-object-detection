@@ -9,7 +9,6 @@ from mmcv.cnn import ConvModule
 from mmdet.core import InstanceData, mask_matrix_nms, multi_apply
 from mmdet.core.utils import center_of_mass, generate_coordinate
 from mmdet.models.builder import HEADS, build_loss
-from mmdet.utils.misc import floordiv
 from .base_mask_head import BaseMaskHead
 
 
@@ -376,41 +375,27 @@ class SOLOHead(BaseMaskHead):
                 center_h, center_w = center_of_mass(gt_mask)
 
                 coord_w = int(
-                    floordiv((center_w / upsampled_size[1]), (1. / num_grid),
-                             rounding_mode='trunc'))
+                    (center_w / upsampled_size[1]) // (1. / num_grid))
                 coord_h = int(
-                    floordiv((center_h / upsampled_size[0]), (1. / num_grid),
-                             rounding_mode='trunc'))
+                    (center_h / upsampled_size[0]) // (1. / num_grid))
 
                 # left, top, right, down
                 top_box = max(
                     0,
-                    int(
-                        floordiv(
-                            (center_h - pos_h_range) / upsampled_size[0],
-                            (1. / num_grid),
-                            rounding_mode='trunc')))
+                    int(((center_h - pos_h_range) / upsampled_size[0]) //
+                        (1. / num_grid)))
                 down_box = min(
                     num_grid - 1,
-                    int(
-                        floordiv(
-                            (center_h + pos_h_range) / upsampled_size[0],
-                            (1. / num_grid),
-                            rounding_mode='trunc')))
+                    int(((center_h + pos_h_range) / upsampled_size[0]) //
+                        (1. / num_grid)))
                 left_box = max(
                     0,
-                    int(
-                        floordiv(
-                            (center_w - pos_w_range) / upsampled_size[1],
-                            (1. / num_grid),
-                            rounding_mode='trunc')))
+                    int(((center_w - pos_w_range) / upsampled_size[1]) //
+                        (1. / num_grid)))
                 right_box = min(
                     num_grid - 1,
-                    int(
-                        floordiv(
-                            (center_w + pos_w_range) / upsampled_size[1],
-                            (1. / num_grid),
-                            rounding_mode='trunc')))
+                    int(((center_w + pos_w_range) / upsampled_size[1]) //
+                        (1. / num_grid)))
 
                 top = max(top_box, coord_h - 1)
                 down = min(down_box, coord_h + 1)

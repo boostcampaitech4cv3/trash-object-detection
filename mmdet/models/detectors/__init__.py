@@ -2,6 +2,7 @@
 from .atss import ATSS
 from .autoassign import AutoAssign
 from .base import BaseDetector
+from .bvr import BVR
 from .cascade_rcnn import CascadeRCNN
 from .centernet import CenterNet
 from .cornernet import CornerNet
@@ -56,3 +57,5 @@ __all__ = [
     'TwoStagePanopticSegmentor', 'PanopticFPN', 'QueryInst', 'LAD', 'TOOD',
     'MaskFormer', 'DDOD', 'Mask2Former'
 ]
+
+__all__ += ['BVR']

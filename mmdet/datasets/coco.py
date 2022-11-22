@@ -17,6 +17,7 @@ from mmdet.core import eval_recalls
 from .api_wrappers import COCO, COCOeval
 from .builder import DATASETS
 from .custom import CustomDataset
+from .usbeval import USBeval
 
 
 @DATASETS.register_module()
@@ -190,7 +191,7 @@ class CocoDataset(CustomDataset):
         else:
             gt_bboxes_ignore = np.zeros((0, 4), dtype=np.float32)
 
-        seg_map = img_info['filename'].rsplit('.', 1)[0] + self.seg_suffix
+        seg_map = img_info['filename'].replace('jpg', 'png')
 
         ann = dict(
             bboxes=gt_bboxes,
@@ -427,6 +428,8 @@ class CocoDataset(CustomDataset):
         if iou_thrs is None:
             iou_thrs = np.linspace(
                 .5, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
+        elif isinstance(iou_thrs, (list, tuple)):
+            iou_thrs = np.array(iou_thrs)
         if metric_items is not None:
             if not isinstance(metric_items, list):
                 metric_items = [metric_items]
@@ -644,6 +647,183 @@ class CocoDataset(CustomDataset):
                                               proposal_nums, iou_thrs,
                                               metric_items)
 
+        if tmp_dir is not None:
+            tmp_dir.cleanup()
+        return eval_results
+
+    def evaluate_custom(self,
+                        results,
+                        metric='bbox',
+                        logger=None,
+                        jsonfile_prefix=None,
+                        classwise=False,
+                        proposal_nums=(100, 300, 1000),
+                        iou_thrs=None,
+                        area_range_type='COCO'):
+        """Evaluation in COCO protocol.
+
+        Args:
+            results (list[list | tuple]): Testing results of the dataset.
+            metric (str | list[str]): Metrics to be evaluated. Options are
+                'bbox', 'segm', 'proposal', 'proposal_fast'.
+            logger (logging.Logger | str | None): Logger used for printing
+                related information during evaluation. Default: None.
+            jsonfile_prefix (str | None): The prefix of json files. It includes
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+            classwise (bool): Whether to evaluating the AP for each class.
+            proposal_nums (Sequence[int]): Proposal number used for evaluating
+                recalls, such as recall@100, recall@1000.
+                Default: (100, 300, 1000).
+            iou_thrs (Sequence[float], optional): IoU threshold used for
+                evaluating recalls/mAPs. If set to a list, the average of all
+                IoUs will also be computed. If not specified, [0.50, 0.55,
+                0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95] will be used.
+                Default: None.
+            area_range_type (str, optional): Type of area range to compute
+                scale-wise AP metrics. Default: 'COCO'.
+
+        Returns:
+            dict[str, float]: COCO style evaluation metric.
+        """
+
+        metrics = metric if isinstance(metric, list) else [metric]
+        allowed_metrics = ['bbox', 'segm', 'proposal', 'proposal_fast']
+        for metric in metrics:
+            if metric not in allowed_metrics:
+                raise KeyError(f'metric {metric} is not supported')
+        if iou_thrs is None:
+            iou_thrs = np.linspace(
+                .5, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
+        elif isinstance(iou_thrs, (list, tuple)):
+            iou_thrs = np.array(iou_thrs)
+
+        result_files, tmp_dir = self.format_results(results, jsonfile_prefix)
+
+        eval_results = OrderedDict()
+        cocoGt = self.coco
+        for metric in metrics:
+            msg = f'Evaluating {metric}...'
+            if logger is None:
+                msg = '\n' + msg
+            print_log(msg, logger=logger)
+
+            if metric == 'proposal_fast':
+                ar = self.fast_eval_recall(
+                    results, proposal_nums, iou_thrs, logger='silent')
+                log_msg = []
+                for i, num in enumerate(proposal_nums):
+                    eval_results[f'AR@{num}'] = ar[i]
+                    log_msg.append(f'\nAR@{num}\t{ar[i]:.4f}')
+                log_msg = ''.join(log_msg)
+                print_log(log_msg, logger=logger)
+                continue
+
+            iou_type = 'bbox' if metric == 'proposal' else metric
+            if metric not in result_files:
+                raise KeyError(f'{metric} is not in results')
+            try:
+                predictions = mmcv.load(result_files[metric])
+                if iou_type == 'segm':
+                    # Refer to https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/coco.py#L331  # noqa
+                    # When evaluating mask AP, if the results contain bbox,
+                    # cocoapi will use the box area instead of the mask area
+                    # for calculating the instance area. Though the overall AP
+                    # is not affected, this leads to different
+                    # small/medium/large mask AP results.
+                    for x in predictions:
+                        x.pop('bbox')
+                    warnings.simplefilter('once')
+                    warnings.warn(
+                        'The key "bbox" is deleted for more accurate mask AP '
+                        'of small/medium/large instances since v2.12.0. This '
+                        'does not change the overall mAP calculation.',
+                        UserWarning)
+                cocoDt = cocoGt.loadRes(predictions)
+            except IndexError:
+                print_log(
+                    'The testing results of the whole dataset is empty.',
+                    logger=logger,
+                    level=logging.ERROR)
+                break
+
+            cocoEval = USBeval(
+                cocoGt, cocoDt, iou_type, area_range_type=area_range_type)
+            cocoEval.params.catIds = self.cat_ids
+            cocoEval.params.imgIds = self.img_ids
+            cocoEval.params.maxDets = list(proposal_nums)
+            cocoEval.params.iouThrs = iou_thrs
+
+            if metric == 'proposal':
+                cocoEval.params.useCats = 0
+                cocoEval.evaluate()
+                cocoEval.accumulate()
+                # Save coco summarize print information to logger
+                redirect_string = io.StringIO()
+                with contextlib.redirect_stdout(redirect_string):
+                    cocoEval.summarize()
+                print_log('\n' + redirect_string.getvalue(), logger=logger)
+                for key, val in cocoEval.stats.items():
+                    if key.startswith('mAP'):
+                        key = f'{metric}_{key}'
+                    eval_results[key] = float(f'{val:.3f}')
+            else:
+                cocoEval.evaluate()
+                cocoEval.accumulate()
+                # Save coco summarize print information to logger
+                redirect_string = io.StringIO()
+                with contextlib.redirect_stdout(redirect_string):
+                    cocoEval.summarize()
+                print_log('\n' + redirect_string.getvalue(), logger=logger)
+                for key, val in cocoEval.stats.items():
+                    if key.startswith('mAP'):
+                        key = f'{metric}_{key}'
+                    eval_results[key] = float(f'{val:.3f}')
+                if classwise:  # Compute per-category AP
+                    # Compute per-category AP
+                    # from https://github.com/facebookresearch/detectron2/
+                    precisions = cocoEval.eval['precision']
+                    # precision: (iou, recall, cls, area range, max dets)
+                    assert len(self.cat_ids) == precisions.shape[2]
+
+                    results_per_category = []
+                    for idx, catId in enumerate(self.cat_ids):
+                        # area range index 0: all area ranges
+                        # max dets index -1: typically 100 per image
+                        nm = self.coco.loadCats(catId)[0]
+                        precision = precisions[:, :, idx, 0, -1]
+                        precision = precision[precision > -1]
+                        if precision.size:
+                            ap = np.mean(precision)
+                        else:
+                            ap = float('nan')
+                        results_per_category.append(
+                            (f'{nm["name"]}', f'{float(ap):0.3f}'))
+
+                    num_columns = min(6, len(results_per_category) * 2)
+                    results_flatten = list(
+                        itertools.chain(*results_per_category))
+                    headers = ['category', 'AP'] * (num_columns // 2)
+                    results_2d = itertools.zip_longest(*[
+                        results_flatten[i::num_columns]
+                        for i in range(num_columns)
+                    ])
+                    table_data = [headers]
+                    table_data += [result for result in results_2d]
+                    table = AsciiTable(table_data)
+                    print_log('\n' + table.table, logger=logger)
+
+                try:
+                    copypastes = []
+                    coco_metrics = [
+                        'mAP', 'mAP_50', 'mAP_75', 'mAP_s', 'mAP_m', 'mAP_l'
+                    ]
+                    for coco_metric in coco_metrics:
+                        copypastes.append(f'{cocoEval.stats[coco_metric]:.3f}')
+                    mAP_copypaste = ' '.join(copypastes)
+                    eval_results[f'{metric}_mAP_copypaste'] = mAP_copypaste
+                except KeyError:
+                    pass
         if tmp_dir is not None:
             tmp_dir.cleanup()
         return eval_results

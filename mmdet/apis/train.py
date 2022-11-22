@@ -6,14 +6,49 @@ import numpy as np
 import torch
 import torch.distributed as dist
 from mmcv.runner import (DistSamplerSeedHook, EpochBasedRunner,
-                         Fp16OptimizerHook, OptimizerHook, build_runner,
-                         get_dist_info)
+                         Fp16OptimizerHook,
+                         GradientCumulativeFp16OptimizerHook,
+                         GradientCumulativeOptimizerHook, OptimizerHook,
+                         build_runner, get_dist_info)
 
+from mmcv_custom.runner import EpochBasedRunnerAmp  # noqa
 from mmdet.core import DistEvalHook, EvalHook, build_optimizer
 from mmdet.datasets import (build_dataloader, build_dataset,
                             replace_ImageToTensor)
 from mmdet.utils import (build_ddp, build_dp, compat_cfg,
                          find_latest_checkpoint, get_root_logger)
+
+try:
+    import apex
+except ImportError:
+    apex = None
+
+
+class DebugGradientCumulativeOptimizerHook(GradientCumulativeOptimizerHook):
+
+    def after_train_iter(self, runner):
+        if not self.initialized:
+            self._init(runner)
+
+        if runner.iter < runner.max_iters - self.remainder_iters:
+            loss_factor = self.cumulative_iters
+        else:
+            loss_factor = self.remainder_iters
+        loss = runner.outputs['loss']
+        loss = loss / loss_factor
+        loss.backward()
+
+        if (self.every_n_iters(runner, self.cumulative_iters)
+                or self.is_last_iter(runner)):
+
+            if self.grad_clip is not None:
+                grad_norm = self.clip_grads(runner.model.parameters())
+                if grad_norm is not None:
+                    # Add grad norm to the logger
+                    runner.log_buffer.update({'grad_norm': float(grad_norm)},
+                                             runner.outputs['num_samples'])
+            runner.optimizer.step()
+            runner.optimizer.zero_grad()
 
 
 def init_random_seed(seed=None, device='cuda'):
@@ -124,6 +159,7 @@ def train_detector(model,
 
     cfg = compat_cfg(cfg)
     logger = get_root_logger(log_level=cfg.log_level)
+    use_apex = cfg.optimizer_config.get('type', None) == 'ApexOptimizerHook'
 
     # prepare data loaders
     dataset = dataset if isinstance(dataset, (list, tuple)) else [dataset]
@@ -148,6 +184,20 @@ def train_detector(model,
 
     data_loaders = [build_dataloader(ds, **train_loader_cfg) for ds in dataset]
 
+    auto_scale_lr(cfg, distributed, logger)
+
+    # use apex fp16 optimizer
+    if use_apex:
+        if apex is None:
+            raise RuntimeError('apex is not installed')
+        optimizer = build_optimizer(model, cfg.optimizer)
+        if cfg.optimizer_config.get('use_fp16', False):
+            model, optimizer = apex.amp.initialize(
+                model.cuda(), optimizer, opt_level='O1')
+            for m in model.modules():
+                if hasattr(m, 'fp16_enabled'):
+                    m.fp16_enabled = True
+
     # put model on gpus
     if distributed:
         find_unused_parameters = cfg.get('find_unused_parameters', False)
@@ -163,9 +213,10 @@ def train_detector(model,
         model = build_dp(model, cfg.device, device_ids=cfg.gpu_ids)
 
     # build optimizer
-    auto_scale_lr(cfg, distributed, logger)
-    optimizer = build_optimizer(model, cfg.optimizer)
+    if not use_apex:
+        optimizer = build_optimizer(model, cfg.optimizer)
 
+    # build runner
     runner = build_runner(
         cfg.runner,
         default_args=dict(
@@ -180,13 +231,24 @@ def train_detector(model,
 
     # fp16 setting
     fp16_cfg = cfg.get('fp16', None)
-    if fp16_cfg is not None:
-        optimizer_config = Fp16OptimizerHook(
-            **cfg.optimizer_config, **fp16_cfg, distributed=distributed)
-    elif distributed and 'type' not in cfg.optimizer_config:
-        optimizer_config = OptimizerHook(**cfg.optimizer_config)
+    # gradient accumulation
+    if 'cumulative_iters' in cfg.optimizer_config:
+        if fp16_cfg is not None:
+            optimizer_config = GradientCumulativeFp16OptimizerHook(
+                **cfg.optimizer_config, **fp16_cfg, distributed=distributed)
+        elif distributed and 'type' not in cfg.optimizer_config:
+            optimizer_config = DebugGradientCumulativeOptimizerHook(
+                **cfg.optimizer_config)
+        else:
+            optimizer_config = cfg.optimizer_config
     else:
-        optimizer_config = cfg.optimizer_config
+        if fp16_cfg is not None:
+            optimizer_config = Fp16OptimizerHook(
+                **cfg.optimizer_config, **fp16_cfg, distributed=distributed)
+        elif distributed and 'type' not in cfg.optimizer_config:
+            optimizer_config = OptimizerHook(**cfg.optimizer_config)
+        else:
+            optimizer_config = cfg.optimizer_config
 
     # register hooks
     runner.register_training_hooks(

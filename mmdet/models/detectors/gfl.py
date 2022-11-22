@@ -5,6 +5,7 @@ from .single_stage import SingleStageDetector
 
 @DETECTORS.register_module()
 class GFL(SingleStageDetector):
+    """Implementation of `GFL <https://arxiv.org/abs/2006.04388>`_."""
 
     def __init__(self,
                  backbone,

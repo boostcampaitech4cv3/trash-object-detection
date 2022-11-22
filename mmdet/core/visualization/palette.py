@@ -53,6 +53,9 @@ def get_palette(palette, num_classes):
     elif palette == 'voc':
         from mmdet.datasets import VOCDataset
         dataset_palette = VOCDataset.PALETTE
+    elif palette == 'wod':
+        from mmdet.datasets import WaymoOpenDataset
+        dataset_palette = WaymoOpenDataset.PALETTE
     elif mmcv.is_str(palette):
         dataset_palette = [mmcv.color_val(palette)[::-1]] * num_classes
     else:

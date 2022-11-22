@@ -10,7 +10,7 @@ import torch
 
 from mmdet.core import visualization as vis
 from mmdet.datasets import (CityscapesDataset, CocoDataset,
-                            CocoPanopticDataset, VOCDataset)
+                            CocoPanopticDataset, VOCDataset, WaymoOpenDataset)
 
 
 def test_color():
@@ -163,6 +163,9 @@ def test_palette():
     palette = vis.get_palette('citys', len(CityscapesDataset.CLASSES))
     assert len(palette) == len(CityscapesDataset.CLASSES)
     assert palette[0] == (220, 20, 60)
+    palette = vis.get_palette('wod', len(WaymoOpenDataset.CLASSES))
+    assert len(palette) == len(WaymoOpenDataset.CLASSES)
+    assert palette[0] == (255, 0, 0)
 
     # test random
     palette1 = vis.get_palette('random', 3)

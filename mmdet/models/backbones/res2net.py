@@ -195,21 +195,29 @@ class Res2Layer(Sequential):
 
         downsample = None
         if stride != 1 or inplanes != planes * block.expansion:
-            downsample = nn.Sequential(
-                nn.AvgPool2d(
-                    kernel_size=stride,
-                    stride=stride,
-                    ceil_mode=True,
-                    count_include_pad=False),
+            downsample = []
+            conv_stride = stride
+            # Res2Net-v1b pretrained models use AvgPool2d in downsample
+            # even if stride == 1
+            if avg_down:  # and stride != 1:
+                conv_stride = 1
+                downsample.append(
+                    nn.AvgPool2d(
+                        kernel_size=stride,
+                        stride=stride,
+                        ceil_mode=True,
+                        count_include_pad=False))
+            downsample.extend([
                 build_conv_layer(
                     conv_cfg,
                     inplanes,
                     planes * block.expansion,
                     kernel_size=1,
-                    stride=1,
+                    stride=conv_stride,
                     bias=False),
-                build_norm_layer(norm_cfg, planes * block.expansion)[1],
-            )
+                build_norm_layer(norm_cfg, planes * block.expansion)[1]
+            ])
+            downsample = nn.Sequential(*downsample)
 
         layers = []
         layers.append(
@@ -313,8 +321,8 @@ class Res2Net(ResNet):
         self.base_width = base_width
         super(Res2Net, self).__init__(
             style='pytorch',
-            deep_stem=True,
-            avg_down=True,
+            deep_stem=deep_stem,
+            avg_down=avg_down,
             pretrained=pretrained,
             init_cfg=init_cfg,
             **kwargs)
