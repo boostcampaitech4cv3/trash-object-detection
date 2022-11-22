@@ -128,4 +128,5 @@ work_dirs/
 /train.py
 /inference.ipynb
 /ensemble.ipynb
+/custom_tool/confusion_config.py
 #*.ipynb
