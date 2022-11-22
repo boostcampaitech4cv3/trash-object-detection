@@ -7,17 +7,17 @@ albu_train_transforms = [
     dict(
         type='OneOf',
         transforms=[
-            # dict(
-            #     type='ColorJitter',
-            #     brightness=[-0.2, 0.2], 
-            #     contrast=[-0.2, 0.2], 
-            #     saturation=[-0.2, 0.2], 
-            #     hue=[-0.2, 0.2], 
-            #     p=1),
+            dict(
+                type='ColorJitter',
+                brightness=(0.1, 0.2), 
+                contrast=(0.1, 0.2), 
+                saturation=(0.1, 0.2), 
+                hue=(0.1, 0.2), 
+                p=1.0),
             dict(
                 type='RandomBrightnessContrast',
-                brightness_limit=(-0.2, 0.3),
-                contrast_limit=(-0.2, 0.3),
+                brightness_limit=(-0.2, 0.2),
+                contrast_limit=(-0.2, 0.2),
                 p=1.0),
             dict(
                 type='CLAHE',
@@ -35,7 +35,7 @@ albu_train_transforms = [
         p=0.1),
     dict(
         type='GaussNoise',
-        var_limit=[0, 50],
+        var_limit=(0, 50),
         p=0.3),
 ]
 train_pipeline = [
