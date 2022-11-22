@@ -129,4 +129,5 @@ work_dirs/
 /inference.ipynb
 /ensemble.ipynb
 /custom_tool/confusion_config.py
+/custom_tool/result_analysis/*
 #*.ipynb
