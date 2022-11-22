@@ -9,10 +9,12 @@ _base_ = [
 # import mmcls.models to trigger register_module in mmcls
 custom_imports = dict(imports=['mmcls.models'], allow_failed_imports=False)
 model = dict(
+    type='RetinaNet',
     backbone=dict(
         _delete_=True,
         type='mmcls.TIMMBackbone',
         model_name='swinv2_small_window16_256',
+        num_classes=10,
         pretrained=True,
         out_indices=(0,1,2,3)),
     neck=dict(in_channels=[96, 192, 384, 768]))

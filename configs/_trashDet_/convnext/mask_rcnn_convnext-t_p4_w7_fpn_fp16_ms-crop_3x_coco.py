@@ -1,31 +1,26 @@
 _base_ = [
-    '../_base_/models/retinanet_r50_fpn.py',
-    '../_base_/datasets/coco_detection.py',
-    '../_base_/schedules/schedule_CosineAnnealing.py', '../_base_/default_runtime.py'
+    '../_base_/models/mask_rcnn_r50_fpn.py',
+    '../_base_/datasets/coco_instance.py',
+    '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
 
-pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.0/swin_tiny_patch4_window7_224.pth'  # noqa
+# please install mmcls>=0.22.0
+# import mmcls.models to trigger register_module in mmcls
+custom_imports = dict(imports=['mmcls.models'], allow_failed_imports=False)
+checkpoint_file = 'https://download.openmmlab.com/mmclassification/v0/convnext/downstream/convnext-tiny_3rdparty_32xb128-noema_in1k_20220301-795e9634.pth'  # noqa
 
 model = dict(
-    type='RetinaNet',
     backbone=dict(
         _delete_=True,
-        type='SwinTransformer',
-        embed_dims=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=4,
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.,
-        attn_drop_rate=0.,
-        drop_path_rate=0.2,
-        patch_norm=True,
-        out_indices=(0, 1, 2, 3),
-        with_cp=False,
-        convert_weights=True,
-        init_cfg=dict(type='Pretrained', checkpoint=pretrained)),
+        type='mmcls.ConvNeXt',
+        arch='tiny',
+        out_indices=[0, 1, 2, 3],
+        drop_path_rate=0.4,
+        layer_scale_init_value=1.0,
+        gap_before_final_norm=False,
+        init_cfg=dict(
+            type='Pretrained', checkpoint=checkpoint_file,
+            prefix='backbone.')),
     neck=dict(in_channels=[96, 192, 384, 768]))
 
 img_norm_cfg = dict(
@@ -34,7 +29,7 @@ img_norm_cfg = dict(
 # augmentation strategy originates from DETR / Sparse RCNN
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', with_bbox=True, with_mask=False),
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(
         type='AutoAugment',
@@ -71,38 +66,25 @@ train_pipeline = [
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
-    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels', 'gt_masks']),
 ]
-
-test_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(
-        type='MultiScaleFlipAug',
-        img_scale=(1333, 800),
-        flip=False,
-        transforms=[
-            dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip'),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(type='DefaultFormatBundle'),
-            dict(type='Collect', keys=['img'])
-        ])
-]
-
-data = dict(train=dict(pipeline=train_pipeline))
+data = dict(train=dict(pipeline=train_pipeline), persistent_workers=True)
 
 optimizer = dict(
     _delete_=True,
+    constructor='LearningRateDecayOptimizerConstructor',
     type='AdamW',
     lr=0.0001,
     betas=(0.9, 0.999),
     weight_decay=0.05,
-    paramwise_cfg=dict(
-        custom_keys={
-            'absolute_pos_embed': dict(decay_mult=0.),
-            'relative_position_bias_table': dict(decay_mult=0.),
-            'norm': dict(decay_mult=0.)
-        }))
-# lr_config = dict(warmup_iters=1000, step=[27, 33])
+    paramwise_cfg={
+        'decay_rate': 0.95,
+        'decay_type': 'layer_wise',
+        'num_layers': 6
+    })
+
+lr_config = dict(warmup_iters=1000, step=[27, 33])
 runner = dict(max_epochs=36)
+
+# you need to set mode='dynamic' if you are using pytorch<=1.5.0
+fp16 = dict(loss_scale=dict(init_scale=512))
