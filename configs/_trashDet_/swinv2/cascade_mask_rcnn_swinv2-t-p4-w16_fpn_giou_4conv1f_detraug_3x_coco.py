@@ -1,6 +1,6 @@
 _base_ = [
     '../swinv2/models/cascade_mask_rcnn_swinv2-t-p4-w16_fpn_giou_4conv1f.py',
-    '../_base_/datasets/coco_instance_detraug.py',
+    '../_base_/datasets/coco_detection.py',
     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
 
