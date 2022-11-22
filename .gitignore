@@ -126,4 +126,5 @@ work_dirs/
 
 # Custom Ignore
 /train.py
-*.ipynb
+/inference.ipynb
+#*.ipynb
