@@ -19,6 +19,6 @@ optimizer = dict(
             'norm': dict(decay_mult=0.)
         }))
 lr_config = dict(step=[27, 33])
-runner = dict(type='EpochBasedRunner', max_epochs=12)
+runner = dict(type='EpochBasedRunner', max_epochs=24)
 
 fp16 = dict(loss_scale=dict(init_scale=512))

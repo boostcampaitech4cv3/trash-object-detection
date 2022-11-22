@@ -8,20 +8,13 @@ albu_train_transforms = [
         type='OneOf',
         transforms=[
             dict(
-                type='ColorJitter',
-                brightness=(0.1, 0.2), 
-                contrast=(0.1, 0.2), 
-                saturation=(0.1, 0.2), 
-                hue=(0.1, 0.2), 
-                p=1.0),
-            dict(
                 type='RandomBrightnessContrast',
                 brightness_limit=(-0.2, 0.2),
                 contrast_limit=(-0.2, 0.2),
                 p=1.0),
             dict(
                 type='CLAHE',
-                clip_limit=(2, 10),
+                clip_limit=(2, 8),
                 tile_grid_size=(8, 8),
                 p=1.0),
         ],
@@ -35,7 +28,7 @@ albu_train_transforms = [
         p=0.1),
     dict(
         type='GaussNoise',
-        var_limit=(0, 50),
+        var_limit=(200, 400),
         p=0.3),
 ]
 train_pipeline = [
