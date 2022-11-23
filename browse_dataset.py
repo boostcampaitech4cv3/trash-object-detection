@@ -111,7 +111,7 @@ def main():
     
     cfg.data.train.pipeline = cfg.train_pipeline
     cfg.data.val.pipeline = cfg.val_pipeline
-    cfg.data.test.pipeline = cfg.test_pipeline 
+    cfg.data.test.pipeline = cfg.test_pipeline
         
     dataset = build_dataset(cfg.data.train)
 

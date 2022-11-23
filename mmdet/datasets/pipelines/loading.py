@@ -692,6 +692,7 @@ class LoadMosaicImageAndAnnotations(object):
     def _load_mosaic_image_and_annotations(self, results):
         indexes = [0, 1, 2, 3]
         result_boxes = []
+        result_labels = []
         results_c = copy.deepcopy(results)
         results = results[0]
         imsize = self.image_shape[0]
@@ -731,19 +732,25 @@ class LoadMosaicImageAndAnnotations(object):
 
 
             result_boxes.append(boxes)
-
+            result_labels.append(result['gt_labels'])
+            
         result_boxes = np.concatenate(result_boxes, 0)
+        result_labels = np.concatenate(result_labels, 0)
         np.clip(result_boxes[:, 0:], 0, 2 * s, out=result_boxes[:, 0:])
         result_boxes = result_boxes
+        result_labels = result_labels[
+            np.where((result_boxes[:, 2] - result_boxes[:, 0]) > self.skip_box_w)]
         result_boxes = result_boxes[
             np.where((result_boxes[:, 2] - result_boxes[:, 0]) > self.skip_box_w)]
+        result_labels = result_labels[
+            np.where((result_boxes[:, 3] - result_boxes[:, 1]) > self.skip_box_h)]
         result_boxes = result_boxes[
             np.where((result_boxes[:, 3] - result_boxes[:, 1]) > self.skip_box_h)]
 
         # results = self._load_image_boxes(results, 0)
 
         results['ann_info']['bboxes'] = result_boxes
-        result_labels = np.zeros(len(result_boxes))
+        # result_labels = np.zeros(len(result_boxes))
         results['ann_info']['labels'] = result_labels
 
         masks = []
