@@ -7,35 +7,42 @@ albu_train_transforms = [
     dict(
         type='OneOf',
         transforms=[
-            dict(
-                type='RandomBrightnessContrast',
-                brightness_limit=(-0.2, 0.2),
-                contrast_limit=(-0.2, 0.2),
-                p=1.0),
-            dict(
-                type='CLAHE',
-                clip_limit=(2, 8),
-                tile_grid_size=(8, 8),
-                p=1.0),
+            dict(type='Flip',p=1.0),
+            dict(type='RandomRotate90',p=1.0)
         ],
         p=0.5),
     dict(
         type='OneOf',
         transforms=[
-            dict(type='Blur', blur_limit=3, p=1.0),
-            dict(type='MedianBlur', blur_limit=3, p=1.0)
+            dict(
+                type='RandomBrightnessContrast',
+                brightness_limit=(-0.1, 0.15),
+                contrast_limit=(-0.1, 0.15),
+                p=1.0),
+            dict(
+                type='CLAHE',
+                clip_limit=(2, 6),
+                tile_grid_size=(8, 8),
+                p=1.0),
+        ],
+        p=0.5),
+    dict(type='HueSaturationValue', hue_shift_limit=15, sat_shift_limit=25, val_shift_limit=10, p=0.5),
+    dict(type='GaussNoise', var_limit=(20, 100), p=0.3),
+    dict(
+        type='OneOf',
+        transforms=[
+            dict(type='Blur', p=1.0),
+            dict(type='GaussianBlur', p=1.0),
+            dict(type='MedianBlur', blur_limit=5, p=1.0),
+            dict(type='MotionBlur', p=1.0)
         ],
         p=0.1),
-    dict(
-        type='GaussNoise',
-        var_limit=(200, 400),
-        p=0.3),
 ]
 train_pipeline = [
     dict(type='LoadMosaicImageAndAnnotations', with_bbox=True, with_mask=False, image_shape=[1024, 1024],
          hsv_aug=True, h_gain=0.014, s_gain=0.68, v_gain=0.36, skip_box_w=5, skip_box_h=5),
     dict(
-        type='Resize', img_scale=(1024, 1024), keep_ratio=True),
+        type='Resize', img_scale=(512, 512), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(
         type='Albu',
@@ -65,16 +72,16 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(1024, 1024),
-        flip=False,
+        img_scale=(512, 512),
+        flip=True, # <-- True=TTA
+        flip_direction=['horizontal', 'vertical', 'diagonal'],
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='Pad', size_divisor=32),
-            # dict(type='DefaultFormatBundle'),
             dict(type='ImageToTensor', keys=['img']),
-            dict(type='Collect', keys=['img'])
+            dict(type='Collect', keys=['img']),
         ])
 ]
 data = dict(
