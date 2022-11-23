@@ -146,18 +146,21 @@ def main():
 
 
         img = item['img'].data.permute(1, 2, 0).numpy()
-        img = img - img.min()
-        img = img / img.max()
-        img *= 255.
+        vis_img = mmcv.imdenormalize(
+            img,
+            mean=np.array([123.675, 116.28, 103.53], dtype=np.float32),
+            std=np.array([58.395, 57.12, 57.375], dtype=np.float32),
+            to_bgr=True)
         
         imshow_det_bboxes(
-            img,
+            vis_img,
             gt_bboxes,
             gt_labels,
             class_names=dataset.CLASSES,
             show=not args.not_show,
             wait_time=args.show_interval,
             out_file=filename,
+            bbox_color=dataset.PALETTE,
             text_color=(200, 200, 200),)
 
         progress_bar.update()
