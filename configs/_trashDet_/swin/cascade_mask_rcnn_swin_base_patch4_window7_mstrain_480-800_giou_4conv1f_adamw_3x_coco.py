@@ -86,7 +86,7 @@ optimizer = dict(
             'relative_position_bias_table': dict(decay_mult=0.),
             'norm': dict(decay_mult=0.)
         }))
-lr_config = dict(step=[27, 33])
+# lr_config = dict(step=[27, 33])
 runner = dict(type='EpochBasedRunner', max_epochs=100)
 
 fp16 = dict(loss_scale='dynamic')
