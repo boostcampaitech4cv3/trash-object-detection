@@ -1,7 +1,7 @@
 _base_ = [
-    '../swinv2/models/atss_swinv2-t-p4-w16_fpn.py',
+    '../_base_/models/atss_swinv2-t-p4-w16_fpn.py',
     '../_base_/datasets/coco_detection.py',
-    '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
+    '../_base_/schedules/schedule_CosineAnnealing.py', '../_base_/default_runtime.py'
 ]
 
 data = dict(samples_per_gpu=4)

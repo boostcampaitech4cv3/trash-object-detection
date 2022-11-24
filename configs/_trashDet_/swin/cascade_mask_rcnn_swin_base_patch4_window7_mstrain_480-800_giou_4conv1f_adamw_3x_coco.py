@@ -3,7 +3,10 @@ _base_ = [
     '../_base_/datasets/coco_detection_aug.py',
     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
+pretrained = 'https://github.com/SwinTransformer/storage/releases/download/v1.0.2/cascade_mask_rcnn_swin_base_patch4_window7.pth'
+
 model = dict(
+    init_cfg=dict(type='Pretrained', checkpoint=pretrained),
     backbone=dict(
         embed_dim=128,
         depths=[2, 2, 18, 2],
