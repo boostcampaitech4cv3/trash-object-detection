@@ -9,7 +9,7 @@ model = dict(
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
-        norm_cfg=dict(type='SyncBN', requires_grad=True),
+        norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=False,
         style='pytorch',
         dcn=dict(type='DCN', deform_groups=1, fallback_on_stride=False),
@@ -38,7 +38,7 @@ model = dict(
     ],
     bbox_head=dict(
         type='GFLSEPCHead',
-        num_classes=80,
+        num_classes=10,
         in_channels=256,
         stacked_convs=0,
         feat_channels=256,
