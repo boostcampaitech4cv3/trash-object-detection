@@ -1,5 +1,4 @@
 _base_ = [
-    '../_base_/datasets/coco_detection_aug_2.py',
     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
 # model settings
