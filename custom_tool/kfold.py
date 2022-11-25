@@ -5,7 +5,6 @@ import numpy as np
 from sklearn.model_selection import StratifiedGroupKFold
 
 
-
 def split_dataset(input_json, output_dir, random_seed):
     random.seed(random_seed)
 

@@ -132,3 +132,6 @@ work_dirs/
 /custom_tool/result_analysis/*
 /dataset_fig
 #*.ipynb
+wandb/
+artifacts/
+custom_tool/

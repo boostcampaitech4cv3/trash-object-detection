@@ -179,12 +179,19 @@ def main(args):
     conf_mat.plot(args.file_name)
 
 if __name__ == "__main__":
+    
+    gt_json = '/../../dataset/val_0.json'
+    # results of inference from val_0
+    pred_csv = '../work_dirs/cascade_rcnn_focalnet_tiny_patch4_mstrain_480-800_adamw_3x_coco_lrf_0/submission_epoch_36.csv'
+    file_name = 'confusion_matrix.png'
+    
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--config', type=bool, default=True)
-    parser.add_argument('--gt_json', type=str, default='')
-    parser.add_argument('--pred_csv', type=str, default='')
-    parser.add_argument('--file_name', type=str, default='',)
+    parser.add_argument('--config', type=bool, default=False)
+    parser.add_argument('--gt_json', type=str, default=gt_json)
+    parser.add_argument('--pred_csv', type=str, default=pred_csv)
+    parser.add_argument('--file_name', type=str, default=file_name)
     args = parser.parse_args()
+    
     if args.config:
         cfg = Config.fromfile(f'./confusion_config.py')
         args.gt_json = cfg.gt_json

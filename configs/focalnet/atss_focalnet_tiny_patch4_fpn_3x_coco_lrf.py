@@ -5,6 +5,7 @@ _base_ = [
 ]
 
 pretrained = 'https://projects4jw.blob.core.windows.net/focalnet/release/classification/focalnet_tiny_lrf.pth'  # noqa
+# pretrained 파일을 focalnet_base_lrf.pth로 바꾸면 더 좋은 성능을 낼 수 있을지도?
 model = dict(
     backbone=dict(
         type='FocalNet',
