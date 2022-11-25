@@ -46,7 +46,9 @@ train_pipeline = [
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(
         type='Resize', 
-        img_scale=[(512, 1024), (768, 1024), (1024, 1024)], 
+        img_scale=[(480, 1024), (512, 1024), (544, 1024), (576, 1024),
+                   (608, 1024), (640, 1024), (672, 1024), (704, 1024),
+                   (736, 1024), (768, 1024), (800, 1024)],
         multiscale_mode='value', 
         keep_ratio=True),
     dict(
