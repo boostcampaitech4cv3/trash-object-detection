@@ -1,8 +1,9 @@
 # dataset settings
-dataset_type = 'MosaicCocoDataset'
-data_root = 'data/coco/'
+dataset_type = 'CocoDataset'
+data_root = '../../../dataset/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+
 albu_train_transforms = [
     dict(
         type='OneOf',
@@ -38,12 +39,12 @@ albu_train_transforms = [
         ],
         p=0.1),
 ]
+
 train_pipeline = [
-    dict(type='LoadMosaicImageAndAnnotations', with_bbox=True, with_mask=False, image_shape=[1024, 1024],
-         hsv_aug=True, h_gain=0.014, s_gain=0.68, v_gain=0.36, skip_box_w=5, skip_box_h=5),
-    dict(
-        type='Resize', img_scale=(512, 512), keep_ratio=True),
-    dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='Resize', img_scale=(1024, 1024), keep_ratio=True),
+    dict(type='RandomFlip', flip_ratio=0.0),
     dict(
         type='Albu',
         transforms=albu_train_transforms,
@@ -58,21 +59,18 @@ train_pipeline = [
             'gt_bboxes': 'bboxes'
         },
         update_pad_shape=False,
-        skip_img_without_anno=True),
+        skip_img_without_anno=True
+        ),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
-    dict(
-        type='Collect', 
-        keys=['img', 'gt_bboxes', 'gt_labels'], 
-        meta_keys=('filename', 'ori_shape', 'img_shape', 'img_norm_cfg',
-                   'pad_shape', 'scale_factor')),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(512, 512),
+        img_scale=(1024, 1024),
         flip=True, # <-- True=TTA
         flip_direction=['horizontal', 'vertical', 'diagonal'],
         transforms=[
@@ -85,21 +83,21 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    samples_per_gpu=2,
-    workers_per_gpu=2,
+    samples_per_gpu=4,
+    workers_per_gpu=4,
     train=dict(
-        type='MosaicCocoDataset',
-        ann_file=data_root + 'annotations/instances_train2017.json',
-        img_prefix=data_root + 'train2017/',
+        type=dataset_type,
+        ann_file=data_root + 'train.json',
+        img_prefix=data_root,
         pipeline=train_pipeline),
     val=dict(
-        type='CocoDataset',
-        ann_file=data_root + 'annotations/instances_val2017.json',
-        img_prefix=data_root + 'val2017/',
+        type=dataset_type,
+        ann_file=data_root + 'val.json',
+        img_prefix=data_root,
         pipeline=test_pipeline),
     test=dict(
-        type='CocoDataset',
-        ann_file=data_root + 'annotations/instances_val2017.json',
-        img_prefix=data_root + 'val2017/',
+        type=dataset_type,
+        ann_file=data_root + 'test.json',
+        img_prefix=data_root,
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='bbox')

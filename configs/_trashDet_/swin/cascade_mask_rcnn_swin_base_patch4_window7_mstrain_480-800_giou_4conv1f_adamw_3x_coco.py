@@ -5,6 +5,7 @@ _base_ = [
 ]
 
 model = dict(
+    init_cfg=dict(type='Pretrained', checkpoint=pretrained),
     backbone=dict(
         embed_dim=128,
         depths=[2, 2, 18, 2],
