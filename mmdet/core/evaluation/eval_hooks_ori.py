@@ -25,9 +25,6 @@ class EvalHook(BaseEvalHook):
 
     def __init__(self, *args, dynamic_intervals=None, **kwargs):
         super(EvalHook, self).__init__(*args, **kwargs)
-        self.rule ='greater'
-        self.key_indicator = 'bbox_mAP_50'
-        self.compare_func = lambda x, y: x > y
         self.latest_results = None
 
         self.use_dynamic_intervals = dynamic_intervals is not None
