@@ -71,7 +71,7 @@ albu_train_transforms = [
 ]
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', with_bbox=True, with_mask=False, with_seg=False),
+    dict(type='LoadAnnotations', with_bbox=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(
         type='Resize', 
@@ -138,7 +138,6 @@ data = dict(
 evaluation = dict(interval=1, metric='bbox')
 # optimizer settings
 optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
     policy='step',
