@@ -27,6 +27,7 @@ from .swin_transformer import SwinTransformerOriginal
 from .swin_transformer_v2 import SwinTransformerV2
 from .trident_resnet import TridentResNet
 from .focalnet import FocalNet
+from .convnext import ConvNeXt
 
 
 __all__ = [
@@ -41,7 +42,7 @@ __all__ = [
 __all__ += [
     'SwinTransformerOriginal', 'CBResNet', 'CBRes2Net', 'CBSwinTransformer',
     'ConvMLP', 'ConvMLPLarge', 'ConvMLPMedium', 'ConvMLPSmall', 'FocalNet',
-    'SwinTransformerV2'
+    'SwinTransformerV2', 'ConvNeXt'
 ]
 __all__ += [
     'pvt_v2_b0', 'pvt_v2_b1', 'pvt_v2_b2', 'pvt_v2_b2_li', 'pvt_v2_b3',

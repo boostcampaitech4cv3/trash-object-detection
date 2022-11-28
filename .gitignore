@@ -128,8 +128,10 @@ work_dirs/
 /train.py
 /inference.ipynb
 /ensemble.ipynb
+/custom_tool/output/*
 /custom_tool/confusion_config.py
 /custom_tool/result_analysis/*
 /dataset_fig
 /weight
+
 #*.ipynb

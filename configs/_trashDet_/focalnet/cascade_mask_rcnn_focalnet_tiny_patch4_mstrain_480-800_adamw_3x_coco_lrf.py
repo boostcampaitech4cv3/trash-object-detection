@@ -3,6 +3,8 @@ _base_ = [
     '../_base_/datasets/coco_detection.py',
     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
 ]
+# pretrained = 'https://projects4jw.blob.core.windows.net/focalnet/release/classification/focalnet_tiny_lrf.pth'  # noqa
+pretrained = 'https://projects4jw.blob.core.windows.net/focalnet/release/detection/focalnet_tiny_lrf_cascade_maskrcnn_3x.pth'
 
 model = dict(
     backbone=dict(
