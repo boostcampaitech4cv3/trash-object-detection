@@ -9,19 +9,19 @@
 _base_ = [
     '../_base_/models/cascade_mask_rcnn_convnext_fpn.py',
     '../_base_/datasets/coco_detection_aug_3.py',
-    '../_base_/schedules/schedule_CosineRestart.py', '../_base_/default_runtime.py'
+    '../_base_/schedules/schedule_CosineAnnealing.py', '../_base_/default_runtime.py'
 ]
 
 model = dict(
     backbone=dict(
         in_chans=3,
         depths=[3, 3, 27, 3], 
-        dims=[128, 256, 512, 1024], 
-        drop_path_rate=0.6,
+        dims=[256, 512, 1024, 2048], 
+        drop_path_rate=0.8,
         layer_scale_init_value=1.0,
         out_indices=[0, 1, 2, 3],
     ),
-    neck=dict(in_channels=[128, 256, 512, 1024]),
+    neck=dict(in_channels=[256, 512, 1024, 2048]),
     roi_head=dict(
         bbox_head=[
             dict(
@@ -125,25 +125,16 @@ train_pipeline = [
     dict(type='DefaultFormatBundle'),
     dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
 ]
-data = dict(train=dict(pipeline=train_pipeline))
+data = dict(train=dict(pipeline=train_pipeline), samples_per_gpu=1)
 
 optimizer = dict(constructor='LearningRateDecayOptimizerConstructor', _delete_=True, type='AdamW', 
                  lr=0.0001, betas=(0.9, 0.999), weight_decay=0.05,
-                 paramwise_cfg={'decay_rate': 0.8,
+                 paramwise_cfg={'decay_rate': 0.7,
                                 'decay_type': 'layer_wise',
                                 'num_layers': 12})
 #lr_config = dict(step=[27, 33])
-runner = dict(type='EpochBasedRunner', max_epochs=36)
+runner = dict(type='EpochBasedRunnerAmp', max_epochs=36)
 
 # do not use mmdet version fp16
 fp16 = None
-load_from='https://dl.fbaipublicfiles.com/convnext/coco/cascade_mask_rcnn_convnext_base_22k_3x.pth'
-
-#$optimizer_config = dict(
-#$    type="DistOptimizerHook",
-#$    update_interval=1,
-#$    grad_clip=None,
-#$    coalesce=True,
-#$    bucket_size_mb=-1,
-#$    use_fp16=True,
-#$)
+load_from='https://dl.fbaipublicfiles.com/convnext/coco/cascade_mask_rcnn_convnext_xlarge_22k_3x.pth'
