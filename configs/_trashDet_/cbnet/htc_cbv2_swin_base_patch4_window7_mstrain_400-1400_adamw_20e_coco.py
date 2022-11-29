@@ -1,39 +1,28 @@
-_base_ = '../htc/htc_x101_32x4d_fpn_16x1_20e_coco.py'
+_base_ = [
+    '../_base_/models/htc_without_semantic_swin_fpn.py',
+    '../_base_/datasets/coco_detection_aug_3.py',
+    '../_base_/schedules/schedule_20e.py', '../_base_/default_runtime.py'
+]
 
 model = dict(
     backbone=dict(
-        type='DetectoRS_ResNeXt',
-        conv_cfg=dict(type='ConvAWS'),
-        sac=dict(type='SAC', use_deform=True),
-        stage_with_sac=(False, True, True, True),
-        output_img=True),
-    neck=dict(
-        type='RFP',
-        rfp_steps=2,
-        aspp_out_channels=64,
-        aspp_dilations=(1, 3, 6, 1),
-        rfp_backbone=dict(
-            rfp_inplanes=256,
-            type='DetectoRS_ResNeXt',
-            depth=101,
-            groups=32,
-            base_width=4,
-            num_stages=4,
-            out_indices=(0, 1, 2, 3),
-            frozen_stages=1,
-            norm_cfg=dict(type='BN', requires_grad=True),
-            norm_eval=True,
-            conv_cfg=dict(type='ConvAWS'),
-            sac=dict(type='SAC', use_deform=True),
-            stage_with_sac=(False, True, True, True),
-            init_cfg=dict(
-                type='Pretrained', checkpoint='open-mmlab://resnext101_32x4d'),
-            style='pytorch')))
-# dataset settings
+        type='CBSwinTransformer',
+        embed_dim=128,
+        depths=[2, 2, 18, 2],
+        num_heads=[4, 8, 16, 32],
+        window_size=7,
+        ape=False,
+        drop_path_rate=0.3,
+        patch_norm=True,
+        use_checkpoint=False),
+    neck=dict(type='CBFPN', in_channels=[128, 256, 512, 1024]),
+    test_cfg=dict(rcnn=dict(score_thr=0.001, nms=dict(type='soft_nms'))))
+
 dataset_type = 'CocoDataset'
 data_root = '../../../dataset/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+# augmentation strategy originates from HTC
 albu_train_transforms = [
     dict(
         type='OneOf',
@@ -71,7 +60,7 @@ albu_train_transforms = [
 ]
 train_pipeline = [
     dict(type='LoadImageFromFile'),
-    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=False, with_seg=False),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(
         type='Resize', 
@@ -117,8 +106,9 @@ test_pipeline = [
             dict(type='Collect', keys=['img']),
         ])
 ]
+samples_per_gpu = 2
 data = dict(
-    samples_per_gpu=4,
+    samples_per_gpu=samples_per_gpu,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -135,17 +125,22 @@ data = dict(
         ann_file=data_root + 'test.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
-evaluation = dict(interval=1, metric='bbox')
-# optimizer settings
-optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-# learning policy
-lr_config = dict(
-    policy='step',
-    warmup='linear',
-    warmup_iters=500,
-    warmup_ratio=1.0 / 3,
-    step=[36, 39])
-runner = dict(type='EpochBasedRunner', max_epochs=40)
-fp16 = dict(loss_scale=512.)
+optimizer = dict(
+    _delete_=True,
+    type='AdamW',
+    lr=0.0001 / 2,
+    betas=(0.9, 0.999),
+    weight_decay=0.05,
+    paramwise_cfg=dict(
+        custom_keys={
+            'absolute_pos_embed': dict(decay_mult=0.),
+            'relative_position_bias_table': dict(decay_mult=0.),
+            'norm': dict(decay_mult=0.)
+        }))
 
-load_from = 'https://www.cs.jhu.edu/~syqiao/DetectoRS/DetectoRS_X101-ed983634.pth'
+fp16 = dict(loss_scale=dict(init_scale=512))
+
+# NOTE: `auto_scale_lr` is for automatically scaling LR,
+# USER SHOULD NOT CHANGE ITS VALUES.
+# base_batch_size = (8 GPUs) x (1 samples per GPU)
+# auto_scale_lr = dict(base_batch_size=8*samples_per_gpu)
