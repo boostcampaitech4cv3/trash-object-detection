@@ -1,22 +1,26 @@
-_base_ = [
-    '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
-]
 # model settings
 model = dict(
     type='HybridTaskCascade',
+    pretrained=None,
     backbone=dict(
-        type='ResNet',
-        depth=50,
-        num_stages=4,
+        type='SwinTransformerOriginal',
+        embed_dim=96,
+        depths=[2, 2, 6, 2],
+        num_heads=[3, 6, 12, 24],
+        window_size=7,
+        mlp_ratio=4.,
+        qkv_bias=True,
+        qk_scale=None,
+        drop_rate=0.,
+        attn_drop_rate=0.,
+        drop_path_rate=0.2,
+        ape=False,
+        patch_norm=True,
         out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=True),
-        norm_eval=True,
-        style='pytorch',
-        init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')),
+        use_checkpoint=False),
     neck=dict(
         type='FPN',
-        in_channels=[256, 512, 1024, 2048],
+        in_channels=[96, 192, 384, 768],
         out_channels=256,
         num_outs=5),
     rpn_head=dict(
@@ -38,6 +42,7 @@ model = dict(
     roi_head=dict(
         type='HybridTaskCascadeRoIHead',
         interleaved=True,
+        mask_info_flow=True,
         num_stages=3,
         stage_loss_weights=[1, 0.5, 0.25],
         bbox_roi_extractor=dict(
@@ -96,7 +101,8 @@ model = dict(
                     use_sigmoid=False,
                     loss_weight=1.0),
                 loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))
-        ]),
+        ],
+    ),
     # model training and testing settings
     train_cfg=dict(
         rpn=dict(
@@ -176,23 +182,4 @@ model = dict(
         rcnn=dict(
             score_thr=0.05,
             nms=dict(type='nms', iou_threshold=0.5),
-            max_per_img=100)))
-img_norm_cfg = dict(
-    mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
-test_pipeline = [
-    dict(type='LoadImageFromFile'),
-    dict(
-        type='MultiScaleFlipAug',
-        img_scale=(1333, 800),
-        flip=False,
-        transforms=[
-            dict(type='Resize', keep_ratio=True),
-            dict(type='RandomFlip', flip_ratio=0.5),
-            dict(type='Normalize', **img_norm_cfg),
-            dict(type='Pad', size_divisor=32),
-            dict(type='ImageToTensor', keys=['img']),
-            dict(type='Collect', keys=['img']),
-        ])
-]
-data = dict(
-    val=dict(pipeline=test_pipeline), test=dict(pipeline=test_pipeline))
+            max_per_img=100,)))

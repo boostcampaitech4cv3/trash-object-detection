@@ -1,39 +1,9 @@
-_base_ = '../htc/htc_x101_32x4d_fpn_16x1_20e_coco.py'
-
-model = dict(
-    backbone=dict(
-        type='DetectoRS_ResNeXt',
-        conv_cfg=dict(type='ConvAWS'),
-        sac=dict(type='SAC', use_deform=True),
-        stage_with_sac=(False, True, True, True),
-        output_img=True),
-    neck=dict(
-        type='RFP',
-        rfp_steps=2,
-        aspp_out_channels=64,
-        aspp_dilations=(1, 3, 6, 1),
-        rfp_backbone=dict(
-            rfp_inplanes=256,
-            type='DetectoRS_ResNeXt',
-            depth=101,
-            groups=32,
-            base_width=4,
-            num_stages=4,
-            out_indices=(0, 1, 2, 3),
-            frozen_stages=1,
-            norm_cfg=dict(type='BN', requires_grad=True),
-            norm_eval=True,
-            conv_cfg=dict(type='ConvAWS'),
-            sac=dict(type='SAC', use_deform=True),
-            stage_with_sac=(False, True, True, True),
-            init_cfg=dict(
-                type='Pretrained', checkpoint='open-mmlab://resnext101_32x4d'),
-            style='pytorch')))
 # dataset settings
 dataset_type = 'CocoDataset'
 data_root = '../../../dataset/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
+
 albu_train_transforms = [
     dict(
         type='OneOf',
@@ -65,21 +35,45 @@ albu_train_transforms = [
             dict(type='Blur', p=1.0),
             dict(type='GaussianBlur', p=1.0),
             dict(type='MedianBlur', blur_limit=5, p=1.0),
-            dict(type='MotionBlur', p=1.0)
+            # dict(type='MotionBlur', p=1.0)
         ],
         p=0.1),
 ]
+
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='RandomFlip', flip_ratio=0.5),
-    dict(
-        type='Resize', 
-        img_scale=[(480, 1024), (512, 1024), (544, 1024), (576, 1024),
-                   (608, 1024), (640, 1024), (672, 1024), (704, 1024),
-                   (736, 1024), (768, 1024), (800, 1024)],
-        multiscale_mode='value', 
-        keep_ratio=True),
+    dict(type='AutoAugment',
+         policies=[
+             [
+                 dict(
+                    type='Resize', 
+                    img_scale=[(480, 1024), (512, 1024), (544, 1024), (576, 1024),
+                            (608, 1024), (640, 1024), (672, 1024), (704, 1024),
+                            (736, 1024), (768, 1024), (800, 1024)],
+                    multiscale_mode='value', 
+                    keep_ratio=True),
+             ],
+             [
+                 dict(type='Resize',
+                      img_scale=[(400, 1024), (500, 1024), (600, 1024)],
+                      multiscale_mode='value',
+                      keep_ratio=True),
+                 dict(type='RandomCrop',
+                      crop_type='absolute_range',
+                      crop_size=(384, 600),
+                      allow_negative_crop=True),
+                 dict(
+                    type='Resize', 
+                    img_scale=[(480, 1024), (512, 1024), (544, 1024), (576, 1024),
+                            (608, 1024), (640, 1024), (672, 1024), (704, 1024),
+                            (736, 1024), (768, 1024), (800, 1024)],
+                    multiscale_mode='value', 
+                    override=True, 
+                    keep_ratio=True), 
+             ]
+         ]),
     dict(
         type='Albu',
         transforms=albu_train_transforms,
@@ -136,16 +130,3 @@ data = dict(
         img_prefix=data_root,
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='bbox')
-# optimizer settings
-optimizer = dict(type='SGD', lr=0.02, momentum=0.9, weight_decay=0.0001)
-# learning policy
-lr_config = dict(
-    policy='step',
-    warmup='linear',
-    warmup_iters=500,
-    warmup_ratio=1.0 / 3,
-    step=[36, 39])
-runner = dict(type='EpochBasedRunner', max_epochs=40)
-fp16 = dict(loss_scale=512.)
-
-load_from = 'https://www.cs.jhu.edu/~syqiao/DetectoRS/DetectoRS_X101-ed983634.pth'
