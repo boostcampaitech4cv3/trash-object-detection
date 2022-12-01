@@ -127,6 +127,7 @@ work_dirs/
 # Custom Ignore
 /train.py
 /inference.ipynb
+/inference.py
 /ensemble.ipynb
 /custom_tool/output/*
 /custom_tool/confusion_config.py
