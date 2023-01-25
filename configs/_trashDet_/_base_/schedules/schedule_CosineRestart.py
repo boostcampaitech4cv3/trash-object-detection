@@ -4,8 +4,8 @@ optimizer_config = dict(grad_clip=None) # in boostcamp default : dict(grad_clip=
 # learning policy
 lr_config = dict(
     policy='CosineRestart', 
-    periods=[5,5,5,5,5,5,5,5,5,5],
-    restart_weights=[1,1,1,1,1,1,1,1,1,1],
-    by_epoch = False,
+    periods=[3900 for _ in range(18)],
+    restart_weights=[1],
+    by_epoch = True,
     min_lr=1e-07)
 runner = dict(type='EpochBasedRunner', max_epochs=12)
