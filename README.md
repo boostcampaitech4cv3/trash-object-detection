@@ -1,12 +1,14 @@
-# **💡 CV16조 비전길잡이 - boostcamp 4기💡**
-## **🚮 Trash Object Detection**
-![image](https://user-images.githubusercontent.com/103131249/214495508-2f73b8a1-6eae-4c55-b4a9-4abccafb9701.png)
+# ** Trash Object Detection**
+![Main](https://user-images.githubusercontent.com/103131249/214495508-2f73b8a1-6eae-4c55-b4a9-4abccafb9701.png)
 
 ## **🚮 Contributors**
+
+**CV-16조 💡 비전길잡이 💡**</br>NAVER Connect Foundation boostcamp AI Tech 4th
+
 |민기|박민지|유영준|장지훈|최동혁|
 |:----:|:----:|:----:|:---:|:---:|
 |[<img alt="revanZX" src="https://avatars.githubusercontent.com/u/25689849?v=4&s=100" width="100">](https://github.com/revanZX)|[<img alt="arislid" src="https://avatars.githubusercontent.com/u/46767966?v=4&s=100" width="100">](https://github.com/arislid)|[<img alt="youngjun04" src="https://avatars.githubusercontent.com/u/113173095?v=4&s=100" width="100">](https://github.com/youngjun04)|[<img alt="FIN443" src="https://avatars.githubusercontent.com/u/70796031?v=4&s=100" width="100">](https://github.com/FIN443)|[<img alt="choipp" src="https://avatars.githubusercontent.com/u/103131249?v=4&s=117" width="100">](https://github.com/choipp)|
-|ConvNext</br>Optimization</br>Ensemble | Yolov7</br>EDA</br>UniverseNet | Swin_Base</br>Loss Function</br>Ensemble test | Dynamic Head</br>DetectoRS</br>Augmentation | PM</br>TTA</br>Pre-trained test|
+|ConvNext</br>Optimization</br>Ensemble | YOLOv7</br>EDA</br>UniverseNet | Swin_Base</br>Loss Function</br>Ensemble test | Dynamic Head</br>DetectoRS</br>Augmentation | PM</br>TTA</br>Pre-trained test|
 
 ## **🚮 Links**
 <div style='display: flex; align-items: center; '>
