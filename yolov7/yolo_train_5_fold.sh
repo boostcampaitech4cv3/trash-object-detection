@@ -1,0 +1,7 @@
+#!/bin/bash
+
+python train_aux.py --workers 6 --device 0 --epochs 40 --batch-size 4 --data data/coco_0.yaml --img 1280 1280 --cfg cfg/training/yolov7-e6e.yaml --weights yolov7-e6e_training.pt --name yolov7-e6e_fold_0-CosineannealingWarmupRestart_0.5 --hyp data/hyp.scratch.custom.yaml --project yolov7  
+python train_aux.py --workers 6 --device 0 --epochs 40 --batch-size 4 --data data/coco_1.yaml --img 1280 1280 --cfg cfg/training/yolov7-e6e.yaml --weights yolov7-e6e_training.pt --name yolov7-e6e_fold_1-CosineannealingWarmupRestart_0.5 --hyp data/hyp.scratch.custom.yaml --project yolov7  
+python train_aux.py --workers 6 --device 0 --epochs 40 --batch-size 4 --data data/coco_2.yaml --img 1280 1280 --cfg cfg/training/yolov7-e6e.yaml --weights yolov7-e6e_training.pt --name yolov7-e6e_fold_2-CosineannealingWarmupRestart_0.5 --hyp data/hyp.scratch.custom.yaml --project yolov7  
+python train_aux.py --workers 6 --device 0 --epochs 40 --batch-size 4 --data data/coco_3.yaml --img 1280 1280 --cfg cfg/training/yolov7-e6e.yaml --weights yolov7-e6e_training.pt --name yolov7-e6e_fold_3-CosineannealingWarmupRestart_0.5 --hyp data/hyp.scratch.custom.yaml --project yolov7  
+python train_aux.py --workers 6 --device 0 --epochs 40 --batch-size 4 --data data/coco_4.yaml --img 1280 1280 --cfg cfg/training/yolov7-e6e.yaml --weights yolov7-e6e_training.pt --name yolov7-e6e_fold_4-CosineannealingWarmupRestart_0.5 --hyp data/hyp.scratch.custom.yaml --project yolov7  
