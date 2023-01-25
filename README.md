@@ -64,8 +64,8 @@
 
 ## **🚮 Directory Structure**
 ```
-|-- yoloV7
-|-- mmdetection
 |-- appendix : 이 프로젝트에 대한 발표자료와 WrapUp Report
+|-- mmdetection
+|-- yoloV7
 `-- README.md
 ```
