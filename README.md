@@ -1,4 +1,4 @@
-# ** Trash Object Detection**
+# **Trash Object Detection**
 ![Main](https://user-images.githubusercontent.com/103131249/214495508-2f73b8a1-6eae-4c55-b4a9-4abccafb9701.png)
 
 ## **🚮 Contributors**
@@ -11,11 +11,8 @@
 |ConvNext</br>Optimization</br>Ensemble | YOLOv7</br>EDA</br>UniverseNet | Swin_Base</br>Loss Function</br>Ensemble test | Dynamic Head</br>DetectoRS</br>Augmentation | PM</br>TTA</br>Pre-trained test|
 
 ## **🚮 Links**
-<div style='display: flex; align-items: center; '>
-    <span>비전 길잡이 노션 - &nbsp</span><a href='https://www.notion.so/vision-pathfinder/Object-Detection-98d7238151d24cfcbd3f365cb68b57af'><img src='https://img.shields.io/badge/Notion-%23000000.svg?style=for-the-badge&logo=notion&logoColor=white'></img></a>
-</div>
-
-[비전 길잡이 발표자료 & WrapUpReport](./appendix/)
+- [비전 길잡이 Notion 📝](https://vision-pathfinder.notion.site/Object-Detection-98d7238151d24cfcbd3f365cb68b57af)
+- [비전 길잡이 발표자료 & WrapUpReport](./appendix/)
 
 ## **🚮 Result**
 ![result](https://user-images.githubusercontent.com/25689849/214493814-4ee7cef2-a8fd-4264-a795-ea59a71b50d0.png)
